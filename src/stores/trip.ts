@@ -18,6 +18,21 @@ export const useTripStore = defineStore('trip', () => {
   function setActualTrip(trip: Trip) {
     actualTrip.value = new Trip(trip)
   }
+  function saveActualTrip() {
+    const trips = getTrips.value
+    const index = trips.findIndex((trip: Trip) => trip.id === actualTrip.value.id)
+    if (index !== -1) trips[index] = actualTrip.value
+    else trips.push(actualTrip.value)
+    setTrips(trips)
+  }
 
-  return { storedTrips, actualTrip, getActualTrip, getTrips, setTrips, setActualTrip }
+  return {
+    storedTrips,
+    actualTrip,
+    getActualTrip,
+    getTrips,
+    setTrips,
+    setActualTrip,
+    saveActualTrip,
+  }
 })

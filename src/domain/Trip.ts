@@ -32,5 +32,21 @@ export default class Trip extends DomainObject {
     this.startDate = trip.startDate
     this.endDate = trip.endDate
     this.destination = trip.destination
+    this.days = trip.days ? trip.days.map((day) => new TripDay(day)) : []
+  }
+
+  calculateTripDays = () => {
+    const result = []
+    const startDate = new Date(this.startDate.split('/').join('-'))
+    const endDate = new Date(this.endDate.split('/').join('-'))
+    for (let i = new Date(startDate); i <= endDate; i.setDate(i.getDate() + 1)) {
+      const newDate = new Date(i)
+      result.push(`${newDate.getFullYear()}/${newDate.getMonth() + 1}/${newDate.getDate()}`)
+    }
+    this.days = result.map((d) => {
+      const tripDay = new TripDay()
+      tripDay.date = d
+      return tripDay
+    })
   }
 }

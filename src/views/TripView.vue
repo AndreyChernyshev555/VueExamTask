@@ -23,11 +23,21 @@
             </div>
           </q-card-section>
           <q-card-section>
-            <div v-for="tripEvent in tripDays[index - 1].events">
-              <div>{{ tripEvent.getEventMainText() }}</div>
-              <div v-if="tripEvent.location">{{ `Место: ${tripEvent.location}` }}</div>
-              <div v-if="tripEvent.desciption">{{ `Описание: ${tripEvent.desciption}` }}</div>
-            </div>
+            <q-list>
+              <q-item
+                v-for="tripEvent in tripDays[index - 1].events"
+                :key="tripEvent.id"
+                @click.right="onItemClick($event, tripEvent)"
+              >
+                <q-item-section>{{ tripEvent.getEventMainText() }}</q-item-section>
+                <q-item-section v-if="tripEvent.location">
+                  {{ `Место: ${tripEvent.location}` }}
+                </q-item-section>
+                <q-item-section v-if="tripEvent.desciption">
+                  {{ `Описание: ${tripEvent.desciption}` }}
+                </q-item-section>
+              </q-item>
+            </q-list>
           </q-card-section>
           <q-card-actions align="center">
             <q-btn
@@ -41,6 +51,14 @@
         </q-card>
       </q-carousel-slide>
     </q-carousel>
+    <div>
+      <q-btn
+        :style="{ width: '100%' }"
+        label="Сохранить записи"
+        color="primary"
+        @click="onSaveDays"
+      />
+    </div>
     <q-dialog v-model="showDialog">
       <q-card class="dialog-card">
         <q-card-section>
@@ -67,6 +85,17 @@
         </q-card-actions>
       </q-card>
     </q-dialog>
+
+    <q-menu v-model="contextMenu.show" :position="contextMenu.position" context-menu>
+      <q-list style="min-width: 150px">
+        <q-item clickable @click="onEditEvent">
+          <q-item-section>Редактировать</q-item-section>
+        </q-item>
+        <q-item clickable @click="onDeleteEvent">
+          <q-item-section>Удалить</q-item-section>
+        </q-item>
+      </q-list>
+    </q-menu>
   </div>
 </template>
 
@@ -91,34 +120,13 @@ const slide = ref<string>('')
 const showDialog = ref<boolean>(false)
 const dayIndex = ref<number>(0)
 const editedEvent = ref<TripEvent>(new TripEvent())
-
-// computed
+const contextMenu = ref<{ show: boolean; position: object }>({
+  show: false,
+  position: { top: 0, left: 0 },
+})
 const tripDays = ref<TripDay[]>([])
 
-// properties
-const columns = [
-  { name: 'time', label: 'Время', field: 'time' },
-  { name: 'title', label: 'Событие', field: 'title' },
-  { name: 'location', label: 'Место', field: 'location' },
-  { name: 'description', label: 'Описание', field: 'description' },
-]
-
 // methods
-const calculateTripDays = () => {
-  const result = []
-  const startDate = new Date(actualTrip.value.startDate.split('/').join('-'))
-  const endDate = new Date(actualTrip.value.endDate.split('/').join('-'))
-  for (let i = new Date(startDate); i <= endDate; i.setDate(i.getDate() + 1)) {
-    const newDate = new Date(i)
-    result.push(`${newDate.getFullYear()}/${newDate.getMonth() + 1}/${newDate.getDate()}`)
-  }
-  tripDays.value = result.map((d) => {
-    const tripDay = new TripDay()
-    tripDay.date = d
-    return tripDay
-  })
-}
-
 const onAdd = (index: number) => {
   dayIndex.value = index
   showDialog.value = true
@@ -127,15 +135,46 @@ const onSelectEmoji = (e: { i: string }) => {
   editedEvent.value.icon = e.i
 }
 const onSaveEvent = () => {
-  tripDays.value[dayIndex.value].events.push(editedEvent.value)
-  console.log(tripDays.value)
+  const eventIndex = tripDays.value[dayIndex.value].events.findIndex(
+    (event) => event.id === editedEvent.value.id,
+  )
+  if (eventIndex === -1) tripDays.value[dayIndex.value].events.push(editedEvent.value)
+  else tripDays.value[dayIndex.value].events[eventIndex] = editedEvent.value
   showDialog.value = false
+}
+const onItemClick = (evt: Event, tripEvent: TripEvent) => {
+  evt.preventDefault()
+  const mouseEvt = evt as MouseEvent
+  contextMenu.value.show = true
+  contextMenu.value.position = { top: mouseEvt.clientY, left: mouseEvt.clientX }
+  editedEvent.value = new TripEvent(tripEvent)
+}
+const onEditEvent = () => {
+  contextMenu.value.show = false
+  showDialog.value = true
+}
+const onDeleteEvent = () => {
+  contextMenu.value.show = false
+  tripDays.value[dayIndex.value].events.splice(
+    tripDays.value[dayIndex.value].events.findIndex((event) => event.id === editedEvent.value.id),
+    1,
+  )
+}
+const onSaveDays = () => {
+  actualTrip.value.days = tripDays.value
+  console.log(actualTrip.value)
+  store.setActualTrip(actualTrip.value)
+  store.saveActualTrip()
+  router.push({ name: 'main' })
 }
 
 // hooks
 onBeforeMount(() => {
-  calculateTripDays()
-  if (tripDays.value.length === 0) router.push({ name: 'main' })
+  tripDays.value = actualTrip.value.days
+  if (tripDays.value.length === 0) {
+    router.push({ name: 'main' })
+    return
+  }
   slide.value = tripDays.value[0].date
 })
 </script>
