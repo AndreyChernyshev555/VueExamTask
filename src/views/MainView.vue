@@ -7,20 +7,24 @@
       :rows="rows"
       :columns="columns"
       row-key="name"
-      @row-contextmenu="onRowContextMenu"
-    />
-
-    <div>
-      <q-btn
-        style="width: 100%"
-        label="Добавить поездку"
-        color="primary"
-        text-color="brown-10"
-        @click="onAdd"
-      />
-    </div>
-
-    <q-menu v-model="contextMenu.show" :position="contextMenu.position" context-menu>
+    >
+      <template #body="props">
+        <q-tr :props="props" class="text-right">
+          <q-td v-for="col in props.cols" :key="col.name">
+            <div v-if="col.name !== 'actions'">{{ col.value }}</div>
+            <q-btn
+              v-else
+              flat
+              rounded
+              dense
+              icon="more_vert"
+              @click="onRowContextMenu($event, props.row)"
+            />
+          </q-td>
+        </q-tr>
+      </template>
+    </q-table>
+    <q-menu v-model="contextMenu" touch-position color="brown-10">
       <q-list style="min-width: 150px">
         <q-item clickable @click="onEdit">
           <q-item-section>Редактировать</q-item-section>
@@ -33,6 +37,15 @@
         </q-item>
       </q-list>
     </q-menu>
+    <div>
+      <q-btn
+        style="width: 100%"
+        label="Добавить поездку"
+        color="primary"
+        text-color="brown-10"
+        @click="onAdd"
+      />
+    </div>
 
     <q-dialog v-model="showDialog" class="dialog-window">
       <q-card class="dialog-card" color="primary">
@@ -95,10 +108,7 @@ const router = useRouter()
 // refs
 const rows = ref<Trip[]>([] as Trip[])
 const dateChanged = ref<boolean>(false)
-const contextMenu = ref<{ show: boolean; position: object }>({
-  show: false,
-  position: { top: 0, left: 0 },
-})
+const contextMenu = ref<boolean>(false)
 const selectedRow = ref<Trip>(new Trip())
 const showDialog = ref<boolean>(false)
 
@@ -116,15 +126,11 @@ const columns = [
     field: (row: Trip) => Utils.dateInLocaleFormat(row.endDate),
   },
   { name: 'destination', label: 'Город/страна', field: 'destination' },
+  { name: 'actions', label: 'Действия', field: 'actions' },
 ]
 
 // methods
-const onRowContextMenu = (evt: Event, row: Trip, index: number) => {
-  if (!row) return
-  evt.preventDefault()
-  const mouseEvt = evt as MouseEvent
-  contextMenu.value.show = true
-  contextMenu.value.position = { top: mouseEvt.clientY, left: mouseEvt.clientX }
+const onRowContextMenu = (evt: Event, row: Trip) => {
   selectedRow.value = row
 }
 
@@ -134,18 +140,20 @@ const onAdd = () => {
 }
 
 const onEdit = () => {
-  contextMenu.value.show = false
+  contextMenu.value = false
   showDialog.value = true
 }
 
 const onEventsOpen = () => {
-  contextMenu.value.show = false
+  contextMenu.value = false
+  const openingTrip = selectedRow.value
+  if (openingTrip.days?.length == 0) openingTrip.calculateTripDays()
   store.setActualTrip(selectedRow.value)
   router.push({ name: 'trip' })
 }
 
 const onDelete = () => {
-  contextMenu.value.show = false
+  contextMenu.value = false
   rows.value.splice(
     rows.value.findIndex((row) => row.id === selectedRow.value.id),
     1,
@@ -201,5 +209,9 @@ onMounted(() => {
 .date-title {
   text-align: center;
   font-size: 1.5em;
+}
+.table-menu {
+  background-color: #faddbf;
+  color: #3e2723;
 }
 </style>

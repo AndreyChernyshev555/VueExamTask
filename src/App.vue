@@ -1,20 +1,13 @@
-<script setup lang="ts">
-import { computed } from 'vue'
-import { RouterView } from 'vue-router'
-import { useRouter } from 'vue-router'
-
-const router = useRouter()
-const currentRouteName = computed(() => router.currentRoute.value.name as string)
-</script>
-
 <template>
   <q-layout class="page" view="hHh lpR fFf">
     <q-header class="transparent">
       <q-toolbar class="text-secondary rounded-borders transparent">
-        <q-toolbar-title shrink>Akaanir</q-toolbar-title>
-        <q-tabs :model-value="currentRouteName" shrink stretch>
-          <q-route-tab name="main" label="Таблица поездок" />
-          <q-route-tab name="trip" label="Планировка" />
+        <q-toolbar-title shrink @click="() => router.push({ name: 'main' })">
+          Akaanir
+        </q-toolbar-title>
+        <q-tabs v-model="currentRouteName" shrink stretch>
+          <q-tab name="main" label="Таблица поездок" />
+          <q-tab name="trip" label="Планировка" />
         </q-tabs>
       </q-toolbar>
     </q-header>
@@ -23,6 +16,15 @@ const currentRouteName = computed(() => router.currentRoute.value.name as string
     </q-page-container>
   </q-layout>
 </template>
+
+<script setup lang="ts">
+import { computed } from 'vue'
+import { RouterView } from 'vue-router'
+import { useRouter } from 'vue-router'
+
+const router = useRouter()
+const currentRouteName = computed(() => router.currentRoute.value.name as string)
+</script>
 
 <style>
 body {
@@ -43,12 +45,19 @@ body {
   width: 100vw;
 }
 .q-date__main {
-  background-color: rgb(250, 221, 191) !important;
+  background-color: #faddbf !important;
 }
 .q-date--bordered {
   border: 3px solid #3e2723 !important;
 }
 .q-time__main {
-  background-color: rgb(250, 221, 191) !important;
+  background-color: #faddbf !important;
+}
+.q-menu {
+  background-color: #faddbf !important;
+  color: #3e2723 !important;
+}
+.q-select__dropdown-icon {
+  color: #faddbf !important;
 }
 </style>

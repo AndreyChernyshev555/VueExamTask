@@ -1,11 +1,13 @@
 <template>
-  <div>
+  <div class="column items-center">
     <q-carousel
       v-model="slide"
       transition-prev="scale"
       transition-next="scale"
       swipeable
-      control-color="black"
+      control-color="brown-10"
+      control-text-color="primary"
+      control-type="regular"
       padding
       arrows
       height="100%"
@@ -37,6 +39,16 @@
                   {{ `Описание: ${tripEvent.desciption}` }}
                 </q-item-section>
               </q-item>
+              <q-menu v-model="contextMenu.show" :position="contextMenu.position" context-menu>
+                <q-list style="min-width: 150px">
+                  <q-item clickable @click="onEditEvent">
+                    <q-item-section>Редактировать</q-item-section>
+                  </q-item>
+                  <q-item clickable @click="onDeleteEvent">
+                    <q-item-section>Удалить</q-item-section>
+                  </q-item>
+                </q-list>
+              </q-menu>
             </q-list>
           </q-card-section>
           <q-card-actions align="center">
@@ -113,24 +125,13 @@
         </q-card-actions>
       </q-card>
     </q-dialog>
-
-    <q-menu v-model="contextMenu.show" :position="contextMenu.position" context-menu>
-      <q-list style="min-width: 150px">
-        <q-item clickable @click="onEditEvent">
-          <q-item-section>Редактировать</q-item-section>
-        </q-item>
-        <q-item clickable @click="onDeleteEvent">
-          <q-item-section>Удалить</q-item-section>
-        </q-item>
-      </q-list>
-    </q-menu>
   </div>
 </template>
 
 <script setup lang="ts">
 import EmojiPicker from 'vue3-emoji-picker'
 import 'vue3-emoji-picker/css'
-import { onBeforeMount, onMounted, ref } from 'vue'
+import { onBeforeMount, ref } from 'vue'
 import { useTripStore } from '@/stores/trip'
 import { useRouter } from 'vue-router'
 import Trip from '@/domain/Trip'
@@ -171,6 +172,7 @@ const onSaveEvent = () => {
   showDialog.value = false
 }
 const onItemClick = (evt: Event, tripEvent: TripEvent) => {
+  if (!tripEvent) return
   evt.preventDefault()
   const mouseEvt = evt as MouseEvent
   contextMenu.value.show = true
@@ -190,7 +192,6 @@ const onDeleteEvent = () => {
 }
 const onSaveDays = () => {
   actualTrip.value.days = tripDays.value
-  console.log(actualTrip.value)
   store.setActualTrip(actualTrip.value)
   store.saveActualTrip()
   router.push({ name: 'main' })
@@ -205,11 +206,6 @@ onBeforeMount(() => {
   }
   slide.value = tripDays.value[0].date
 })
-onMounted(() => {
-  console.log(document)
-  const target = document.querySelector('.v3-emoji-picker')
-  console.log(target)
-})
 </script>
 
 <style scoped>
@@ -222,6 +218,7 @@ onMounted(() => {
   margin-top: 20vh;
   background-color: transparent;
   color: #faddbf;
+  width: 50vw;
 }
 .slide-title {
   font-size: 2em;
