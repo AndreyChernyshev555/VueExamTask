@@ -1,7 +1,8 @@
 <template>
   <div class="main-page">
     <q-table
-      class="trip-table"
+      table-class="trip-table-colors"
+      card-class="trip-table-colors"
       title="Поездки"
       :rows="rows"
       :columns="columns"
@@ -10,7 +11,13 @@
     />
 
     <div>
-      <q-btn :style="{ width: '100%' }" label="Добавить поездку" color="primary" @click="onAdd" />
+      <q-btn
+        style="width: 100%"
+        label="Добавить поездку"
+        color="primary"
+        text-color="brown-10"
+        @click="onAdd"
+      />
     </div>
 
     <q-menu v-model="contextMenu.show" :position="contextMenu.position" context-menu>
@@ -18,36 +25,56 @@
         <q-item clickable @click="onEdit">
           <q-item-section>Редактировать</q-item-section>
         </q-item>
+        <q-item clickable @click="onEventsOpen">
+          <q-item-section>Открыть события</q-item-section>
+        </q-item>
         <q-item clickable @click="onDelete">
           <q-item-section>Удалить</q-item-section>
         </q-item>
       </q-list>
     </q-menu>
 
-    <q-dialog v-model="showDialog">
-      <q-card class="dialog-card">
+    <q-dialog v-model="showDialog" class="dialog-window">
+      <q-card class="dialog-card" color="primary">
         <q-card-section>
           <div class="text-h6">Редактирование поездки</div>
         </q-card-section>
         <q-card-section>
-          <q-input label="Название" v-model="selectedRow.name" />
-          <q-date
-            label="Дата начала"
-            color="secondary"
-            v-model="selectedRow.startDate"
-            @change="() => (dateChanged = true)"
-          />
-          <q-date
-            label="Дата окончания"
-            color="secondary"
-            v-model="selectedRow.endDate"
-            @change="() => (dateChanged = true)"
-          />
+          <q-input class="q-mb-md" label="Название" v-model="selectedRow.name" />
+          <div class="row justify-center">
+            <div class="q-mb-md">
+              <div class="q-mb-sm date-title">Дата начала</div>
+              <q-date
+                label="Дата начала"
+                color="brown-10"
+                text-color="primary"
+                minimal
+                flat
+                bordered
+                v-model="selectedRow.startDate"
+                @change="() => (dateChanged = true)"
+              />
+            </div>
+            <div style="width: 10px">{{ ' ' }}</div>
+            <div class="q-mb-md">
+              <div class="q-mb-sm date-title">Дата окончания</div>
+              <q-date
+                label="Дата окончания"
+                color="brown-10"
+                text-color="primary"
+                minimal
+                flat
+                bordered
+                v-model="selectedRow.endDate"
+                @change="() => (dateChanged = true)"
+              />
+            </div>
+          </div>
           <q-input label="Город/страна" v-model="selectedRow.destination" />
         </q-card-section>
         <q-card-actions align="right">
-          <q-btn flat label="Сохранить" class="dialog-button" color="secondary" @click="saveRow" />
-          <q-btn flat label="Отмена" class="dialog-button" color="secondary" v-close-popup />
+          <q-btn flat label="Сохранить" class="dialog-button" color="brown-10" @click="saveRow" />
+          <q-btn flat label="Отмена" class="dialog-button" color="brown-10" v-close-popup />
         </q-card-actions>
       </q-card>
     </q-dialog>
@@ -111,6 +138,12 @@ const onEdit = () => {
   showDialog.value = true
 }
 
+const onEventsOpen = () => {
+  contextMenu.value.show = false
+  store.setActualTrip(selectedRow.value)
+  router.push({ name: 'trip' })
+}
+
 const onDelete = () => {
   contextMenu.value.show = false
   rows.value.splice(
@@ -123,13 +156,16 @@ const onDelete = () => {
 const saveRow = () => {
   if (dateChanged.value) selectedRow.value.calculateTripDays()
   const existingIndex = rows.value.findIndex((row) => row.id === selectedRow.value.id)
-  if (existingIndex !== -1) rows.value[existingIndex] = new Trip(selectedRow.value)
-  else rows.value.push(new Trip(selectedRow.value))
+  const newTrip = new Trip(selectedRow.value)
+  newTrip.calculateTripDays()
+  if (existingIndex !== -1) rows.value[existingIndex] = newTrip
+  else rows.value.push(newTrip)
   showDialog.value = false
   store.setTrips(rows.value)
   store.setActualTrip(selectedRow.value)
   selectedRow.value = new Trip()
   dateChanged.value = false
+  console.log(store.getActualTrip)
   router.push({ name: 'trip' })
 }
 
@@ -149,8 +185,21 @@ onMounted(() => {
   width: 100%;
   height: 100%;
 }
+::v-deep(.trip-table-colors) {
+  background-color: #3e2723;
+  color: #faddbf;
+}
+.dialog-window {
+  background-color: rgba(0, 0, 0, 0.9);
+}
 .dialog-card {
-  max-width: 50vw;
-  min-width: 50vw;
+  max-width: 35vw;
+  min-width: 35vw;
+  background: #faddbf;
+  color: #3e2723;
+}
+.date-title {
+  text-align: center;
+  font-size: 1.5em;
 }
 </style>

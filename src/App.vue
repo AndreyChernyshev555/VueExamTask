@@ -9,10 +9,9 @@ const currentRouteName = computed(() => router.currentRoute.value.name as string
 
 <template>
   <q-layout class="page" view="hHh lpR fFf">
-    <q-header elevated class="bg-primary text-white">
-      <q-toolbar class="bg-primary text-white rounded-borders">
-        <q-toolbar-title>Exam Task</q-toolbar-title>
-        <q-space />
+    <q-header class="transparent">
+      <q-toolbar class="text-secondary rounded-borders transparent">
+        <q-toolbar-title shrink>Akaanir</q-toolbar-title>
         <q-tabs :model-value="currentRouteName" shrink stretch>
           <q-route-tab name="main" label="Таблица поездок" />
           <q-route-tab name="trip" label="Планировка" />
@@ -29,6 +28,10 @@ const currentRouteName = computed(() => router.currentRoute.value.name as string
 body {
   margin: 0;
   padding: 0;
+  background: url('../public/i.jpg');
+  background-size: cover;
+  background-repeat: no-repeat;
+  font-family: 'Ubuntu Sans', sans-serif;
 }
 #app {
   margin: 0;
@@ -38,5 +41,14 @@ body {
   margin: 0;
   padding: 0;
   width: 100vw;
+}
+.q-date__main {
+  background-color: rgb(250, 221, 191) !important;
+}
+.q-date--bordered {
+  border: 3px solid #3e2723 !important;
+}
+.q-time__main {
+  background-color: rgb(250, 221, 191) !important;
 }
 </style>

@@ -44,44 +44,72 @@
               flat
               label="Добавить событие"
               class="dialog-button"
-              color="secondary"
+              color="brown-10"
+              text-color="primary"
               @click="onAdd(index - 1)"
             />
           </q-card-actions>
         </q-card>
       </q-carousel-slide>
     </q-carousel>
-    <div>
+    <div class="row justify-center">
       <q-btn
-        :style="{ width: '100%' }"
+        :style="{ width: '30vw' }"
         label="Сохранить записи"
-        color="primary"
+        color="brown-10"
+        text-color="primary"
         @click="onSaveDays"
       />
     </div>
     <q-dialog v-model="showDialog">
       <q-card class="dialog-card">
         <q-card-section>
-          <div class="text-h6">Создание события</div>
+          <div class="text-h5">Создание события</div>
         </q-card-section>
         <q-card-section class="dialog-card-form">
           <q-input v-model="editedEvent.title" label="Название" />
-          <div class="time-picker">
-            <q-time v-model="editedEvent.time" label="Время" />
+          <div class="row justify-center q-ma-md text-h6">Время</div>
+          <div class="justify-center time-picker">
+            <q-time
+              v-model="editedEvent.time"
+              landscape
+              text-color="brown-10"
+              color="primary"
+              flat
+            />
           </div>
           <q-input v-model="editedEvent.location" label="Место" />
           <q-input v-model="editedEvent.desciption" label="Описание" type="textarea" />
-          <EmojiPicker :native="true" @select="onSelectEmoji" />
+          <div class="row justify-between items-center">
+            <div :style="{ width: '35%', textAlign: 'center', fontSize: '4em' }">
+              {{ editedEvent.icon }}
+            </div>
+            <EmojiPicker
+              :native="true"
+              @select="onSelectEmoji"
+              hide-group-names
+              hide-search
+              disable-skin-tones
+            />
+          </div>
         </q-card-section>
         <q-card-actions align="right">
           <q-btn
             flat
             label="Сохранить"
             class="dialog-button"
-            color="secondary"
+            color="primary"
+            text-color="brown-10"
             @click="onSaveEvent"
           />
-          <q-btn flat label="Отмена" class="dialog-button" color="secondary" v-close-popup />
+          <q-btn
+            flat
+            label="Отмена"
+            class="dialog-button"
+            color="primary"
+            text-color="brown-10"
+            v-close-popup
+          />
         </q-card-actions>
       </q-card>
     </q-dialog>
@@ -102,7 +130,7 @@
 <script setup lang="ts">
 import EmojiPicker from 'vue3-emoji-picker'
 import 'vue3-emoji-picker/css'
-import { onBeforeMount, ref } from 'vue'
+import { onBeforeMount, onMounted, ref } from 'vue'
 import { useTripStore } from '@/stores/trip'
 import { useRouter } from 'vue-router'
 import Trip from '@/domain/Trip'
@@ -177,14 +205,23 @@ onBeforeMount(() => {
   }
   slide.value = tripDays.value[0].date
 })
+onMounted(() => {
+  console.log(document)
+  const target = document.querySelector('.v3-emoji-picker')
+  console.log(target)
+})
 </script>
 
 <style scoped>
 .day-card {
   width: 30vw;
+  background-color: #3e2723;
+  color: #faddbf;
 }
 .event-carousel {
   margin-top: 20vh;
+  background-color: transparent;
+  color: #faddbf;
 }
 .slide-title {
   font-size: 2em;
@@ -193,6 +230,8 @@ onBeforeMount(() => {
 .dialog-card {
   max-width: 50vw;
   min-width: 50vw;
+  background-color: #faddbf;
+  color: #3e2723;
 }
 .dialog-card-form {
   display: flex;
@@ -203,5 +242,15 @@ onBeforeMount(() => {
   display: flex;
   flex-direction: row;
   justify-content: center;
+}
+.v3-emoji-picker {
+  width: 65% !important;
+  margin: 0 !important;
+  background-color: transparent !important;
+  box-shadow: none !important;
+  --v3-picker-border: transparent !important;
+}
+.v3-emoji-picker .v3-footer {
+  display: none !important;
 }
 </style>
