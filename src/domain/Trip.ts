@@ -37,14 +37,12 @@ export default class Trip extends DomainObject {
 
   calculateTripDays() {
     const result = []
-    console.log(this)
     const startDate = new Date(this.startDate.split('/').join('-'))
     const endDate = new Date(this.endDate.split('/').join('-'))
     for (let i = new Date(startDate); i <= endDate; i.setDate(i.getDate() + 1)) {
       const newDate = new Date(i)
       result.push(`${newDate.getFullYear()}/${newDate.getMonth() + 1}/${newDate.getDate()}`)
     }
-    console.log(result)
     this.days = result.map((d) => {
       const tripDay = new TripDay()
       tripDay.date = d

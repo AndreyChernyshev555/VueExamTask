@@ -4,6 +4,7 @@
       v-model="slide"
       transition-prev="scale"
       transition-next="scale"
+      animated
       swipeable
       control-color="brown-10"
       control-text-color="primary"
@@ -11,35 +12,40 @@
       padding
       arrows
       height="100%"
-      class="q-pa-md row flex-center event-carousel"
+      class="q-pa-md row flex-center items-center event-carousel"
     >
-      <q-carousel-slide
-        v-for="index in tripDays.length"
-        :key="index"
-        :name="tripDays[index - 1].date"
-      >
-        <q-card class="q-mb-md day-card">
+      <q-carousel-slide v-for="index in tripDays.length" :key="index" :name="index - 1">
+        <q-card class="day-card column justify-between">
           <q-card-section>
             <div class="slide-title">
               {{ `День ${index} - ${Utils.dateInLocaleFormat(tripDays[index - 1].date)}` }}
             </div>
           </q-card-section>
-          <q-card-section>
+          <q-card-section class="day-card-list">
             <q-list>
-              <q-item
-                v-for="tripEvent in tripDays[index - 1].events"
-                :key="tripEvent.id"
-                @click.right="onItemClick($event, tripEvent)"
+              <transition-group appear leave-active-class="animated fadeOut faster">
+                <q-item
+                  v-for="tripEvent in tripDays[index - 1].events"
+                  :key="tripEvent.id"
+                  @click.right="onItemClick(tripEvent)"
+                >
+                  <q-item-section>{{ tripEvent.getEventMainText() }}</q-item-section>
+                  <q-item-section v-if="tripEvent.location">
+                    {{ `Место: ${tripEvent.location}` }}
+                  </q-item-section>
+                  <q-item-section v-else>Место: не указано</q-item-section>
+                  <q-item-section v-if="tripEvent.desciption">
+                    {{ `Описание: ${tripEvent.desciption}` }}
+                  </q-item-section>
+                  <q-item-section v-else>Без описания</q-item-section>
+                </q-item>
+              </transition-group>
+              <q-menu
+                v-model="contextMenu.show"
+                :position="contextMenu.position"
+                context-menu
+                touch-position
               >
-                <q-item-section>{{ tripEvent.getEventMainText() }}</q-item-section>
-                <q-item-section v-if="tripEvent.location">
-                  {{ `Место: ${tripEvent.location}` }}
-                </q-item-section>
-                <q-item-section v-if="tripEvent.desciption">
-                  {{ `Описание: ${tripEvent.desciption}` }}
-                </q-item-section>
-              </q-item>
-              <q-menu v-model="contextMenu.show" :position="contextMenu.position" context-menu>
                 <q-list style="min-width: 150px">
                   <q-item clickable @click="onEditEvent">
                     <q-item-section>Редактировать</q-item-section>
@@ -58,7 +64,7 @@
               class="dialog-button"
               color="brown-10"
               text-color="primary"
-              @click="onAdd(index - 1)"
+              @click="onAdd"
             />
           </q-card-actions>
         </q-card>
@@ -79,31 +85,37 @@
           <div class="text-h5">Создание события</div>
         </q-card-section>
         <q-card-section class="dialog-card-form">
-          <q-input v-model="editedEvent.title" label="Название" />
-          <div class="row justify-center q-ma-md text-h6">Время</div>
-          <div class="justify-center time-picker">
-            <q-time
-              v-model="editedEvent.time"
-              landscape
-              text-color="brown-10"
-              color="primary"
-              flat
+          <q-form ref="dialogCardForm">
+            <q-input
+              v-model="editedEvent.title"
+              label="Название"
+              :rules="[(val) => !!val || 'Обязательное поле']"
             />
-          </div>
-          <q-input v-model="editedEvent.location" label="Место" />
-          <q-input v-model="editedEvent.desciption" label="Описание" type="textarea" />
-          <div class="row justify-between items-center">
-            <div :style="{ width: '35%', textAlign: 'center', fontSize: '4em' }">
-              {{ editedEvent.icon }}
+            <div class="row justify-center q-ma-md text-h6">Время</div>
+            <div class="justify-center time-picker">
+              <q-time
+                v-model="editedEvent.time"
+                landscape
+                text-color="brown-10"
+                color="primary"
+                flat
+              />
             </div>
-            <EmojiPicker
-              :native="true"
-              @select="onSelectEmoji"
-              hide-group-names
-              hide-search
-              disable-skin-tones
-            />
-          </div>
+            <q-input v-model="editedEvent.location" label="Место" />
+            <q-input v-model="editedEvent.desciption" label="Описание" type="textarea" />
+            <div class="row justify-between items-center q-px-md">
+              <div :style="{ width: '35%', textAlign: 'center', fontSize: '4em' }">
+                {{ editedEvent.icon }}
+              </div>
+              <EmojiPicker
+                :native="true"
+                @select="onSelectEmoji"
+                hide-group-names
+                hide-search
+                disable-skin-tones
+              />
+            </div>
+          </q-form>
         </q-card-section>
         <q-card-actions align="right">
           <q-btn
@@ -125,10 +137,13 @@
         </q-card-actions>
       </q-card>
     </q-dialog>
+
+    <AlertDialog v-model="alert" :error-message="errorMessage" />
   </div>
 </template>
 
 <script setup lang="ts">
+import AlertDialog from '@/components/AlertDialog.vue'
 import EmojiPicker from 'vue3-emoji-picker'
 import 'vue3-emoji-picker/css'
 import { onBeforeMount, ref } from 'vue'
@@ -138,16 +153,19 @@ import Trip from '@/domain/Trip'
 import TripEvent from '@/domain/TripEvent'
 import Utils from '@/domain/Utils'
 import TripDay from '@/domain/TripDay'
+import { QForm } from 'quasar'
 
 // use
 const store = useTripStore()
 const router = useRouter()
 
 // refs
+const alert = ref(false)
+const dialogCardForm = ref(QForm)
+const errorMessage = ref<string>('')
 const actualTrip = ref<Trip>(store.getActualTrip)
-const slide = ref<string>('')
+const slide = ref<number>(0)
 const showDialog = ref<boolean>(false)
-const dayIndex = ref<number>(0)
 const editedEvent = ref<TripEvent>(new TripEvent())
 const contextMenu = ref<{ show: boolean; position: object }>({
   show: false,
@@ -156,28 +174,34 @@ const contextMenu = ref<{ show: boolean; position: object }>({
 const tripDays = ref<TripDay[]>([])
 
 // methods
-const onAdd = (index: number) => {
-  dayIndex.value = index
+const onAdd = () => {
+  editedEvent.value = new TripEvent()
   showDialog.value = true
 }
 const onSelectEmoji = (e: { i: string }) => {
   editedEvent.value.icon = e.i
 }
 const onSaveEvent = () => {
-  const eventIndex = tripDays.value[dayIndex.value].events.findIndex(
-    (event) => event.id === editedEvent.value.id,
-  )
-  if (eventIndex === -1) tripDays.value[dayIndex.value].events.push(editedEvent.value)
-  else tripDays.value[dayIndex.value].events[eventIndex] = editedEvent.value
-  showDialog.value = false
+  dialogCardForm.value?.validate().then((success: boolean) => {
+    if (!success) return
+    if (!editedEvent.value.time) {
+      errorMessage.value = 'Выберите время'
+      alert.value = true
+      return
+    }
+    const eventIndex = tripDays.value[slide.value].events.findIndex(
+      (event) => event.id === editedEvent.value.id,
+    )
+    if (eventIndex === -1) tripDays.value[slide.value].events.push(editedEvent.value)
+    else tripDays.value[slide.value].events[eventIndex] = editedEvent.value
+    tripDays.value[slide.value].events.sort((a, b) => (a.time > b.time ? 1 : -1))
+    showDialog.value = false
+  })
 }
-const onItemClick = (evt: Event, tripEvent: TripEvent) => {
+const onItemClick = (tripEvent: TripEvent) => {
   if (!tripEvent) return
-  evt.preventDefault()
-  const mouseEvt = evt as MouseEvent
   contextMenu.value.show = true
-  contextMenu.value.position = { top: mouseEvt.clientY, left: mouseEvt.clientX }
-  editedEvent.value = new TripEvent(tripEvent)
+  editedEvent.value = tripEvent
 }
 const onEditEvent = () => {
   contextMenu.value.show = false
@@ -185,8 +209,8 @@ const onEditEvent = () => {
 }
 const onDeleteEvent = () => {
   contextMenu.value.show = false
-  tripDays.value[dayIndex.value].events.splice(
-    tripDays.value[dayIndex.value].events.findIndex((event) => event.id === editedEvent.value.id),
+  tripDays.value[slide.value].events.splice(
+    tripDays.value[slide.value].events.findIndex((event) => event.id === editedEvent.value.id),
     1,
   )
 }
@@ -204,18 +228,29 @@ onBeforeMount(() => {
     router.push({ name: 'main' })
     return
   }
-  slide.value = tripDays.value[0].date
+  slide.value = 0
 })
 </script>
 
 <style scoped>
 .day-card {
   width: 30vw;
+  height: 60vh;
   background-color: #3e2723;
   color: #faddbf;
 }
+.day-card-list {
+  padding: 0;
+  max-height: 30vh;
+  overflow-y: scroll;
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+.day-card-list::-webkit-scrollbar {
+  display: none;
+}
 .event-carousel {
-  margin-top: 20vh;
+  margin-top: 5vh;
   background-color: transparent;
   color: #faddbf;
   width: 50vw;

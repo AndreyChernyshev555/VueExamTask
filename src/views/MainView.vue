@@ -53,37 +53,46 @@
           <div class="text-h6">Редактирование поездки</div>
         </q-card-section>
         <q-card-section>
-          <q-input class="q-mb-md" label="Название" v-model="selectedRow.name" />
-          <div class="row justify-center">
-            <div class="q-mb-md">
-              <div class="q-mb-sm date-title">Дата начала</div>
-              <q-date
-                label="Дата начала"
-                color="brown-10"
-                text-color="primary"
-                minimal
-                flat
-                bordered
-                v-model="selectedRow.startDate"
-                @change="() => (dateChanged = true)"
-              />
+          <q-form ref="tripForm">
+            <q-input
+              class="q-mb-md"
+              label="Название"
+              v-model="selectedRow.name"
+              :rules="[(val) => !!val || 'Обязательное поле']"
+            />
+            <div class="row justify-center">
+              <div class="q-mb-md">
+                <div class="q-mb-sm date-title">Дата начала</div>
+                <q-date
+                  label="Дата начала"
+                  color="brown-10"
+                  text-color="primary"
+                  minimal
+                  flat
+                  bordered
+                  v-model="selectedRow.startDate"
+                />
+              </div>
+              <div style="width: 10px">{{ ' ' }}</div>
+              <div class="q-mb-md">
+                <div class="q-mb-sm date-title">Дата окончания</div>
+                <q-date
+                  label="Дата окончания"
+                  color="brown-10"
+                  text-color="primary"
+                  minimal
+                  flat
+                  bordered
+                  v-model="selectedRow.endDate"
+                />
+              </div>
             </div>
-            <div style="width: 10px">{{ ' ' }}</div>
-            <div class="q-mb-md">
-              <div class="q-mb-sm date-title">Дата окончания</div>
-              <q-date
-                label="Дата окончания"
-                color="brown-10"
-                text-color="primary"
-                minimal
-                flat
-                bordered
-                v-model="selectedRow.endDate"
-                @change="() => (dateChanged = true)"
-              />
-            </div>
-          </div>
-          <q-input label="Город/страна" v-model="selectedRow.destination" />
+            <q-input
+              label="Город/страна"
+              v-model="selectedRow.destination"
+              :rules="[(val) => !!val || 'Обязательное поле']"
+            />
+          </q-form>
         </q-card-section>
         <q-card-actions align="right">
           <q-btn flat label="Сохранить" class="dialog-button" color="brown-10" @click="saveRow" />
@@ -91,23 +100,30 @@
         </q-card-actions>
       </q-card>
     </q-dialog>
+
+    <AlertDialog v-model="alert" :error-message="errorMessage" />
   </div>
 </template>
 
 <script setup lang="ts">
+import AlertDialog from '@/components/AlertDialog.vue'
+import { QForm } from 'quasar'
 import { onMounted, ref } from 'vue'
 import Trip from '../domain/Trip'
 import { useTripStore } from '@/stores/trip'
 import { useRouter } from 'vue-router'
 import Utils from '@/domain/Utils'
+import cloneDeep from 'lodash/cloneDeep'
 
 // use
 const store = useTripStore()
 const router = useRouter()
 
 // refs
+const alert = ref<boolean>(false)
+const errorMessage = ref<string>('')
+const tripForm = ref(QForm)
 const rows = ref<Trip[]>([] as Trip[])
-const dateChanged = ref<boolean>(false)
 const contextMenu = ref<boolean>(false)
 const selectedRow = ref<Trip>(new Trip())
 const showDialog = ref<boolean>(false)
@@ -130,9 +146,7 @@ const columns = [
 ]
 
 // methods
-const onRowContextMenu = (evt: Event, row: Trip) => {
-  selectedRow.value = row
-}
+const onRowContextMenu = (evt: Event, row: Trip) => (selectedRow.value = cloneDeep(row))
 
 const onAdd = () => {
   selectedRow.value = new Trip()
@@ -162,19 +176,24 @@ const onDelete = () => {
 }
 
 const saveRow = () => {
-  if (dateChanged.value) selectedRow.value.calculateTripDays()
-  const existingIndex = rows.value.findIndex((row) => row.id === selectedRow.value.id)
-  const newTrip = new Trip(selectedRow.value)
-  newTrip.calculateTripDays()
-  if (existingIndex !== -1) rows.value[existingIndex] = newTrip
-  else rows.value.push(newTrip)
-  showDialog.value = false
-  store.setTrips(rows.value)
-  store.setActualTrip(selectedRow.value)
-  selectedRow.value = new Trip()
-  dateChanged.value = false
-  console.log(store.getActualTrip)
-  router.push({ name: 'trip' })
+  tripForm.value?.validate().then((success: boolean) => {
+    if (!success) return
+    if (Utils.strToDate(selectedRow.value.endDate) < Utils.strToDate(selectedRow.value.startDate)) {
+      alert.value = true
+      errorMessage.value = 'Дата окончания не может быть раньше даты начала'
+      return
+    }
+    selectedRow.value.calculateTripDays()
+    const existingIndex = rows.value.findIndex((row) => row.id === selectedRow.value.id)
+    const newTrip = new Trip(selectedRow.value)
+    if (existingIndex !== -1) rows.value[existingIndex] = newTrip
+    else rows.value.push(newTrip)
+    showDialog.value = false
+    store.setTrips(rows.value)
+    store.setActualTrip(newTrip)
+    selectedRow.value = new Trip()
+    router.push({ name: 'trip' })
+  })
 }
 
 // hooks
