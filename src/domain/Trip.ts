@@ -24,7 +24,7 @@ export default class Trip extends DomainObject {
   days: TripDay[] = []
 
   constructor(trip?: Trip) {
-    super()
+    super(trip)
     if (!trip) return
 
     this.id = trip.id
@@ -35,7 +35,7 @@ export default class Trip extends DomainObject {
     this.days = trip.days ? trip.days.map((day) => new TripDay(day)) : []
   }
 
-  calculateTripDays() {
+  calculateTripDays(oldDays?: TripDay[]) {
     const result = []
     const startDate = new Date(this.startDate.split('/').join('-'))
     const endDate = new Date(this.endDate.split('/').join('-'))
@@ -44,6 +44,10 @@ export default class Trip extends DomainObject {
       result.push(`${newDate.getFullYear()}/${newDate.getMonth() + 1}/${newDate.getDate()}`)
     }
     this.days = result.map((d) => {
+      if (oldDays) {
+        const oldDay = oldDays.find((day) => day.date === d)
+        if (oldDay) return oldDay
+      }
       const tripDay = new TripDay()
       tripDay.date = d
       return tripDay

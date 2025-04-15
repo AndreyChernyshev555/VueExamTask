@@ -181,11 +181,15 @@ const saveRow = () => {
       errorMessage.value = 'Дата окончания не может быть раньше даты начала'
       return
     }
-    selectedRow.value.calculateTripDays()
     const existingIndex = rows.value.findIndex((row) => row.id === selectedRow.value.id)
     const newTrip = new Trip(selectedRow.value)
-    if (existingIndex !== -1) rows.value[existingIndex] = newTrip
-    else rows.value.push(newTrip)
+    if (existingIndex !== -1) {
+      newTrip.calculateTripDays(rows.value[existingIndex].days)
+      rows.value[existingIndex] = newTrip
+    } else {
+      newTrip.calculateTripDays()
+      rows.value.push(newTrip)
+    }
     showDialog.value = false
     store.setTrips(rows.value)
     store.setActualTrip(newTrip)

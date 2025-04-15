@@ -6,7 +6,7 @@ export default class TripDay extends DomainObject {
   events: TripEvent[] = []
 
   constructor(tripDay?: TripDay) {
-    super()
+    super(tripDay)
     if (!tripDay) return
 
     this.date = tripDay.date

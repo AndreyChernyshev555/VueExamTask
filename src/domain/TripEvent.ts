@@ -23,7 +23,7 @@ export default class TripEvent extends DomainObject {
   icon: string = ''
 
   constructor(tripEvent?: TripEvent) {
-    super()
+    super(tripEvent)
     if (!tripEvent) return
 
     this.title = tripEvent.title
