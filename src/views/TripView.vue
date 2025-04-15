@@ -164,7 +164,6 @@ import TripEvent from '@/domain/TripEvent'
 import Utils from '@/domain/Utils'
 import TripDay from '@/domain/TripDay'
 import { QForm } from 'quasar'
-import cloneDeep from 'lodash/cloneDeep'
 
 // use
 const store = useTripStore()
@@ -212,7 +211,7 @@ const onSaveEvent = () => {
 const onItemClick = (tripEvent: TripEvent) => {
   if (!tripEvent) return
   contextMenu.value.show = true
-  editedEvent.value = cloneDeep(tripEvent)
+  editedEvent.value = new TripEvent(tripEvent)
 }
 const onEditEvent = () => {
   contextMenu.value.show = false

@@ -114,7 +114,6 @@ import Trip from '../domain/Trip'
 import { useTripStore } from '@/stores/trip'
 import { useRouter } from 'vue-router'
 import Utils from '@/domain/Utils'
-import cloneDeep from 'lodash/cloneDeep'
 
 // use
 const store = useTripStore()
@@ -147,9 +146,7 @@ const columns = [
 
 // methods
 const onRowContextMenu = (evt: Event, row: Trip) => {
-  console.log('row context')
-  const mouseEvt = evt as MouseEvent
-  selectedRow.value = cloneDeep(row)
+  selectedRow.value = new Trip(row)
 }
 
 const onAdd = () => {
