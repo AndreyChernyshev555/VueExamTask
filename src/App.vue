@@ -2,7 +2,7 @@
   <q-layout class="page" view="hHh lpR fFf">
     <q-header class="transparent">
       <q-toolbar class="text-secondary rounded-borders transparent">
-        <q-toolbar-title shrink @click="() => router.push({ name: 'main' })">
+        <q-toolbar-title class="page-title" shrink @click="() => router.push({ name: 'main' })">
           Akaanir
         </q-toolbar-title>
       </q-toolbar>
@@ -37,6 +37,9 @@ body {
   margin: 0;
   padding: 0;
   width: 100vw;
+}
+.page-title {
+  cursor: pointer;
 }
 .q-date__main {
   background-color: #faddbf !important;
