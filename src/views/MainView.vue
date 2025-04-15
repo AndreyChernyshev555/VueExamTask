@@ -19,24 +19,25 @@
               dense
               icon="more_vert"
               @click="onRowContextMenu($event, props.row)"
-            />
+            >
+              <q-menu anchor="bottom left" color="brown-10">
+                <q-list style="min-width: 150px">
+                  <q-item clickable @click="onEdit" v-close-popup>
+                    <q-item-section>Редактировать</q-item-section>
+                  </q-item>
+                  <q-item clickable @click="onEventsOpen" v-close-popup>
+                    <q-item-section>Открыть события</q-item-section>
+                  </q-item>
+                  <q-item clickable @click="onDelete" v-close-popup>
+                    <q-item-section>Удалить</q-item-section>
+                  </q-item>
+                </q-list>
+              </q-menu>
+            </q-btn>
           </q-td>
         </q-tr>
       </template>
     </q-table>
-    <q-menu v-model="contextMenu" touch-position color="brown-10">
-      <q-list style="min-width: 150px">
-        <q-item clickable @click="onEdit">
-          <q-item-section>Редактировать</q-item-section>
-        </q-item>
-        <q-item clickable @click="onEventsOpen">
-          <q-item-section>Открыть события</q-item-section>
-        </q-item>
-        <q-item clickable @click="onDelete">
-          <q-item-section>Удалить</q-item-section>
-        </q-item>
-      </q-list>
-    </q-menu>
     <div>
       <q-btn
         style="width: 100%"
@@ -124,7 +125,6 @@ const alert = ref<boolean>(false)
 const errorMessage = ref<string>('')
 const tripForm = ref(QForm)
 const rows = ref<Trip[]>([] as Trip[])
-const contextMenu = ref<boolean>(false)
 const selectedRow = ref<Trip>(new Trip())
 const showDialog = ref<boolean>(false)
 
@@ -146,7 +146,11 @@ const columns = [
 ]
 
 // methods
-const onRowContextMenu = (evt: Event, row: Trip) => (selectedRow.value = cloneDeep(row))
+const onRowContextMenu = (evt: Event, row: Trip) => {
+  console.log('row context')
+  const mouseEvt = evt as MouseEvent
+  selectedRow.value = cloneDeep(row)
+}
 
 const onAdd = () => {
   selectedRow.value = new Trip()
@@ -154,12 +158,10 @@ const onAdd = () => {
 }
 
 const onEdit = () => {
-  contextMenu.value = false
   showDialog.value = true
 }
 
 const onEventsOpen = () => {
-  contextMenu.value = false
   const openingTrip = selectedRow.value
   if (openingTrip.days?.length == 0) openingTrip.calculateTripDays()
   store.setActualTrip(selectedRow.value)
@@ -167,7 +169,6 @@ const onEventsOpen = () => {
 }
 
 const onDelete = () => {
-  contextMenu.value = false
   rows.value.splice(
     rows.value.findIndex((row) => row.id === selectedRow.value.id),
     1,

@@ -67,16 +67,26 @@
               @click="onAdd"
             />
           </q-card-actions>
+          <q-tooltip class="bg-primary text-brown-10" anchor="bottom middle" self="center middle">
+            Открыть меню события можно правой кнопкой мыши
+          </q-tooltip>
         </q-card>
       </q-carousel-slide>
     </q-carousel>
-    <div class="row justify-center">
+    <div class="column justify-center">
       <q-btn
-        :style="{ width: '30vw' }"
+        :style="{ width: '30vw', marginBottom: '1vh' }"
         label="Сохранить записи"
         color="brown-10"
         text-color="primary"
         @click="onSaveDays"
+      />
+      <q-btn
+        :style="{ width: '30vw' }"
+        label="Вернуться к поездкам"
+        color="brown-10"
+        text-color="primary"
+        @click="onExit"
       />
     </div>
     <q-dialog v-model="showDialog">
@@ -154,6 +164,7 @@ import TripEvent from '@/domain/TripEvent'
 import Utils from '@/domain/Utils'
 import TripDay from '@/domain/TripDay'
 import { QForm } from 'quasar'
+import cloneDeep from 'lodash/cloneDeep'
 
 // use
 const store = useTripStore()
@@ -201,7 +212,7 @@ const onSaveEvent = () => {
 const onItemClick = (tripEvent: TripEvent) => {
   if (!tripEvent) return
   contextMenu.value.show = true
-  editedEvent.value = tripEvent
+  editedEvent.value = cloneDeep(tripEvent)
 }
 const onEditEvent = () => {
   contextMenu.value.show = false
@@ -220,6 +231,7 @@ const onSaveDays = () => {
   store.saveActualTrip()
   router.push({ name: 'main' })
 }
+const onExit = () => router.push({ name: 'main' })
 
 // hooks
 onBeforeMount(() => {
@@ -250,7 +262,7 @@ onBeforeMount(() => {
   display: none;
 }
 .event-carousel {
-  margin-top: 5vh;
+  margin-top: 1vh;
   background-color: transparent;
   color: #faddbf;
   width: 50vw;

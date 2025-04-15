@@ -5,7 +5,12 @@
         <q-toolbar-title shrink @click="() => router.push({ name: 'main' })">
           Akaanir
         </q-toolbar-title>
-        <q-tabs v-model="currentRouteName" shrink stretch>
+        <q-tabs
+          v-model="currentRouteName"
+          shrink
+          stretch
+          @click="() => router.push({ name: 'main' })"
+        >
           <q-tab name="main" label="Таблица поездок" />
           <q-tab name="trip" label="Планировка" />
         </q-tabs>
